@@ -4,7 +4,7 @@
 //
 #pragma once
 #include <string>
-using namespace std;
+using namespace std;    
 
 // The elements of an instruction.
 class Instruction {
@@ -32,13 +32,12 @@ public:
             return ST_AssemblerInstr;
         }
 
-        return ST_Comment; // Default return
+        return ST_Comment; 
     }
 
     // Compute the location of the next instruction.
     int LocationNextInstruction(int a_loc)
     {
-        // ++a_loc increments before returning
         return ++a_loc;
     }
 
@@ -53,7 +52,6 @@ public:
     }
 
 private:
-    // Helper function declarations (defined elsewhere)
     string RemoveComment(string line);
     bool ParseLine(const string& line, string& label, string& opcode, string& operand1, string& operand2);
 
@@ -66,8 +64,8 @@ private:
     string m_instruction;  // The original instruction.
 
     // Derived values.
-    int m_NumOpCode;               // Numeric opcode value.
-    InstructionType m_type; // Default type.
-    bool m_IsNumericOperand;     // True if operand is numeric.
-    int m_Operand1Value;             // Numeric operand value if numeric.
+    int m_NumOpCode = 0;               // Numeric opcode value.
+    InstructionType m_type = ST_Comment; // Default type.
+    bool m_IsNumericOperand = false;     // True if operand is numeric.
+    int m_Operand1Value = 0;             // Numeric operand value if numeric.
 };
