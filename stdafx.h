@@ -21,4 +21,4 @@
 #include <map>
 #include<istream>
 
-using namespace s
+using namespace std;
