@@ -2,8 +2,9 @@
 #include "Instruction.h"
 #include "Errors.h"
 #include <sstream>
+using namespace std;
 
-string RemoveComment(string line) {
+string Instruction::RemoveComment(string line) {
     size_t pos = line.find(';');
     if (pos == string::npos)
     {
