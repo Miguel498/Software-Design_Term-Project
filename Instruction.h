@@ -1,73 +1,73 @@
 //
-// Class to parse and provide information about instructions.  Note: you will be adding more functionality.
+// Class to parse and provide information about instructions.
+// Note: you will be adding more functionality.
 //
 #pragma once
+#include <string>
+using namespace std;
 
 // The elements of an instruction.
 class Instruction {
 
 public:
+    Instruction() = default;
+    ~Instruction() = default;
 
-    Instruction( ) { };
-    ~Instruction( ) { };
-
-    // Codes to indicate the type of instruction we are processing.  Why is this inside the
-    // class?  We should make this an enum class.  We will do this during a lecture.
+    // Codes to indicate the type of instruction we are processing.
+    // (Later, this should be changed to an enum class.)
     enum InstructionType {
         ST_MachineLanguage, 	// A machine language instruction.
         ST_AssemblerInstr,      // Assembler Language instruction.
         ST_Comment,             // Comment or blank line
-        ST_End                  // end instruction.
+        ST_End                  // End instruction.
     };
-    // Parse the Instruction.
-    InstructionType ParseInstruction( string a_line )
-    {
-	    a_line = RemoveComment(a_line);
-	    if(ParseLine(a_line, m_Label, m_OpCode, m_Operand1, m_Operand2)){
-		    //???
-	    };
-	    return ST_Comment; //MIGGY 
-    }
-    bool ParseLine(const string& line, string& label, string& opcode, 
-    string& operand1, string &operand2);
 
+    // Parse the Instruction.
+    InstructionType ParseInstruction(string a_line)
+    {
+        a_line = RemoveComment(a_line);
+
+        if (ParseLine(a_line, m_Label, m_OpCode, m_Operand1, m_Operand2)) {
+            // TODO: Determine and return correct type
+            return ST_AssemblerInstr;
+        }
+
+        return ST_Comment; // Default return
+    }
 
     // Compute the location of the next instruction.
-	int LocationNextInstruction( int a_loc )
-	{
-	    return a_loc++; //MIGGY 
-    };
-    // To access the label
-    inline string &GetLabel( ) {
+    int LocationNextInstruction(int a_loc)
+    {
+        // ++a_loc increments before returning
+        return ++a_loc;
+    }
 
+    // Access the label.
+    inline string& GetLabel() {
         return m_Label;
-    };
-    // To determine if a label is blank.
-    inline bool isLabel( ) {
+    }
 
-        return ! m_Label.empty();
-    };
+    // Determine if a label exists.
+    inline bool isLabel() const {
+        return !m_Label.empty();
+    }
 
-
-private:{
+private:
+    // Helper function declarations (defined elsewhere)
     string RemoveComment(string line);
-    bool ParseLine(const string& line, string& label, string& opcode, string& operand1, string &operand2);
+    bool ParseLine(const string& line, string& label, string& opcode, string& operand1, string& operand2);
 
-    };
-
-    // The elemements of a instruction
+    // The elements of an instruction.
     string m_Label;        // The label.
-    string m_OpCode;       // The symbolic op code.
-    string m_Operand1;      // The operands
-    string m_Operand2;      
+    string m_OpCode;       // The symbolic opcode.
+    string m_Operand1;     // The first operand.
+    string m_Operand2;     // The second operand.
 
     string m_instruction;  // The original instruction.
 
     // Derived values.
-    int m_NumOpCode;       // The numerical value of the op code for machine language equivalents.
-    InstructionType m_type;// The type of instruction.
-
-    bool m_IsNumericOperand;// == true if the operand is numeric.
-    int m_Operan1Value;   // The value of the operand if it is numeric.
-
+    int m_NumOpCode;               // Numeric opcode value.
+    InstructionType m_type; // Default type.
+    bool m_IsNumericOperand;     // True if operand is numeric.
+    int m_Operand1Value;             // Numeric operand value if numeric.
 };
