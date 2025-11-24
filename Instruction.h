@@ -38,7 +38,7 @@ public:
     // Compute the location of the next instruction.
     int LocationNextInstruction(int a_loc)
     {
-        return ++a_loc;
+        return a_loc++;
     }
 
     // Access the label.
