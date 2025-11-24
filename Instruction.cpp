@@ -3,7 +3,9 @@
 #include "Errors.h"
 #include <sstream>
 using namespace std;
-
+//remove comments from a line 
+//param name = "line"> The line to have its comment removed
+//return> the original line with its comment removed
 string Instruction::RemoveComment(string line) {
     size_t pos = line.find(';');
     if (pos == string::npos)
