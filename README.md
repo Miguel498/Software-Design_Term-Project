@@ -1,24 +1,3 @@
-# Software-Design_Term-Project
-The VC1620 is a decimal computer with 100,000 words of memory. Each word consists of 12 decimal digits. (Note: the IBM 1620 used decimal numbers.)  
-Output For Assembler
- 
-Example of a test program. (Yes, this program does not do much.)  This should be in a file.
-;this is a test
-        org    100
-hi     read    x;comment immediately after statement       
-hay  copy   y, x ; This is the another comment.
-        WRITE    x; to show that operation codes are case insensitive
-          bp      hi y; shows we don't have to have everything line up.
-        halt
-
-;test
-x      dc      5
-y      ds      1
-z      ds      99
-b      dc      555
-a      dc      100
-        end
- 
 Output from the test program.  For ease of debugging, the output will be written to the screen.
 Symbol Table:
 Symbol #     Symbol     Location
@@ -67,6 +46,3 @@ Results from emulating program:
 -7
 
 End of emulation
-
-
- 
