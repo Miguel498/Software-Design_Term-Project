@@ -5,84 +5,157 @@
 #include "Assembler.h"
 #include "Errors.h"
 
-// Constructor for the assembler.  Note: we are passing argc and argv to the file access constructor.
-// See main program.  
-Assembler::Assembler( int argc, char *argv[] )
-: m_facc( argc, argv )
+/*
+NAME
+
+    Assembler - constructor for the Assembler class.
+
+SYNOPSIS
+
+    Assembler::Assembler(int argc, char *argv[]);
+
+DESCRIPTION
+
+    Initializes the assembler by opening the source file through
+    the FileAccess object.
+*/
+Assembler::Assembler(int argc, char* argv[])
+    : m_facc(argc, argv)
 {
     // Nothing else to do here at this point.
-}  
-// Destructor currently does nothing.  You might need to add something as you develope this project.  If not, we can delete it.
-Assembler::~Assembler( )
+}
+
+/*
+NAME
+
+    ~Assembler - destructor for the Assembler class.
+
+DESCRIPTION
+
+    Currently does nothing. May need additions as project develops.
+*/
+Assembler::~Assembler()
 {
 }
-// Pass I establishes the location of the labels.  You will write better function comments according to the coding standards.
-void Assembler::PassI( ) 
+
+/*
+NAME
+
+    PassI - first pass of the assembler.
+
+SYNOPSIS
+
+    void Assembler::PassI();
+
+DESCRIPTION
+
+    Establishes the location of all labels. Reads each line of
+    source code, parses it, and adds any labels to the symbol table
+    along with their locations.
+*/
+void Assembler::PassI()
 {
     int loc = 0;        // Tracks the location of the instructions to be generated.
 
     // Successively process each line of source code.
-    for( ; ; ) {
+    for (; ; ) {
 
         // Read the next line from the source file.
-        string line; 
-        if( ! m_facc.GetNextLine( line ) ) {
+        string line;
+        if (!m_facc.GetNextLine(line)) {
 
             // If there are no more lines, we are missing an end statement.
             // We will let this error be reported by Pass II.
             return;
         }
+
         // Parse the line and get the instruction type.
-        Instruction::InstructionType st =  m_inst.ParseInstruction( line );
-        Errors::RecordError("MIGGY: In Pass1");
+        Instruction::InstructionType st = m_inst.ParseInstruction(line);
+
         // If this is an end statement, there is nothing left to do in pass I.
         // Pass II will determine if the end is the last statement and report an error if it isn't.
-        if( st == Instruction::ST_End ) return;
+        if (st == Instruction::ST_End) return;
 
         // Labels can only be on machine language and assembler language
         // instructions.  So, skip comments.
-        if( st == Instruction::ST_Comment )  
+        if (st == Instruction::ST_Comment)
         {
-        	continue;
-	    }
+            continue;
+        }
+
+        // Handle ORG directive - sets the location counter
+        if (st == Instruction::ST_AssemblerInstr && m_inst.GetOpCode() == "ORG") {
+            if (m_inst.IsOperand1Numeric()) {
+                loc = m_inst.GetOperand1Value();
+            }
+            continue;
+        }
+
         // If the instruction has a label, record it and its location in the
         // symbol table.
-        if( m_inst.isLabel( ) ) {
-
-            m_symtab.AddSymbol( m_inst.GetLabel( ), loc );
+        if (m_inst.isLabel()) {
+            m_symtab.AddSymbol(m_inst.GetLabel(), loc);
         }
+
         // Compute the location of the next instruction.
-        loc = m_inst.LocationNextInstruction( loc );
+        loc = m_inst.LocationNextInstruction(loc);
     }
 }
-// Pass II generates the machine language translation of the source code.
-// Pass II - generate a translation
+
+/*
+NAME
+
+    PassII - second pass of the assembler.
+
+SYNOPSIS
+
+    void Assembler::PassII();
+
+DESCRIPTION
+
+    Generates the machine language translation of the source code.
+    Displays the translation in the format specified by the assignment.
+*/
 void Assembler::PassII()
 {
-    // Reset file to beginning and translate into emulator memory.
+    // Reset file to beginning.
     m_facc.rewind();
 
     int loc = 0;
+
+    // Print header for translation output
+    cout << "Translation of Program:" << endl;
+    cout << endl;
+    cout << "Location    Contents    Original Statement" << endl;
 
     string line;
     while (m_facc.GetNextLine(line)) {
 
         Instruction::InstructionType st = m_inst.ParseInstruction(line);
+        string origStatement = m_inst.GetOriginalStatement();
 
-        // If end directive, stop processing.
+        // If end directive, print it and stop processing.
         if (st == Instruction::ST_End) {
+            // Print the end statement without location/contents
+            cout << "                                     " << origStatement << endl;
             break;
         }
 
-        // Skip comments and blank lines.
-        if (st == Instruction::ST_Comment) continue;
+        // Handle comments - just print the original statement
+        if (st == Instruction::ST_Comment) {
+            cout << "                                     " << origStatement << endl;
+            continue;
+        }
 
-        // Handle assembler directives (simple support for ORG, DC, DS).
+        // Handle assembler directives
         if (st == Instruction::ST_AssemblerInstr) {
             string opc = m_inst.GetOpCode();
 
             if (opc == "ORG") {
-                // Set location counter.
+                // Print ORG statement
+                cout << setw(5) << right << loc << "                              " << origStatement << endl;
+
+                // Set location counter
                 if (m_inst.IsOperand1Numeric()) {
                     loc = m_inst.GetOperand1Value();
                 }
@@ -111,10 +184,17 @@ void Assembler::PassII()
                         Errors::RecordError("Undefined symbol in DC: " + m_inst.GetOperand1());
                     }
                 }
+
                 // Store value into emulator memory at loc.
                 if (!m_emul.insertMemory(loc, value)) {
                     Errors::RecordError("Memory insert failed at location " + to_string(loc));
                 }
+
+                // Print DC statement with contents
+                cout << setw(5) << right << loc << "          ";
+                cout << setw(12) << setfill('0') << right << value << setfill(' ');
+                cout << "   " << origStatement << endl;
+
                 loc = m_inst.LocationNextInstruction(loc);
                 continue;
             }
@@ -132,16 +212,22 @@ void Assembler::PassII()
                         Errors::RecordError("Undefined symbol in DS: " + m_inst.GetOperand1());
                     }
                 }
+
+                // Initialize reserved memory to 0
                 for (int i = 0; i < count; ++i) {
                     if (!m_emul.insertMemory(loc + i, 0LL)) {
                         Errors::RecordError("Memory insert failed at location " + to_string(loc + i));
                     }
                 }
+
+                // Print DS statement without contents
+                cout << setw(5) << right << loc << "                     " << origStatement << endl;
+
                 loc += count;
                 continue;
             }
             else {
-                // Unknown assembler directive - record error and continue.
+                // Unknown assembler directive - record error
                 Errors::RecordError("Unknown assembler directive: " + opc);
                 continue;
             }
@@ -151,42 +237,80 @@ void Assembler::PassII()
         if (st == Instruction::ST_MachineLanguage) {
             int opcode = m_inst.GetNumOpCode();
             int address1 = 0;
+            int address2 = 0;
 
-            // Operand1 may be numeric or a symbol.
+            // Operand1 may be numeric or a symbol
+            string op1 = m_inst.GetOperand1();
             if (m_inst.IsOperand1Numeric()) {
                 address1 = m_inst.GetOperand1Value();
             }
-            else {
-                string op1 = m_inst.GetOperand1();
-                // strip trailing comma if present
-                if (!op1.empty() && op1.back() == ',') op1.pop_back();
+            else if (!op1.empty()) {
                 int symLoc;
-                if (op1.empty()) {
-                    address1 = 0;
-                }
-                else if (m_symtab.LookupSymbol(op1, symLoc)) {
+                if (m_symtab.LookupSymbol(op1, symLoc)) {
                     address1 = symLoc;
                 }
                 else {
-                    Errors::RecordError("Undefined symbol in machine instruction operand: " + op1);
+                    Errors::RecordError("Undefined symbol: " + op1);
                 }
             }
 
-            // Encode instruction: opcode * 10^10 + address1 * 10^5 + address2(=0)
+            // Operand2 may be numeric or a symbol
+            string op2 = m_inst.GetOperand2();
+            if (m_inst.IsOperand2Numeric()) {
+                address2 = m_inst.GetOperand2Value();
+            }
+            else if (!op2.empty()) {
+                int symLoc;
+                if (m_symtab.LookupSymbol(op2, symLoc)) {
+                    address2 = symLoc;
+                }
+                else {
+                    Errors::RecordError("Undefined symbol: " + op2);
+                }
+            }
+
+            // Encode instruction: opcode * 10^10 + address1 * 10^5 + address2
             long long word = static_cast<long long>(opcode) * 10'000'000'000LL
                 + static_cast<long long>(address1) * 100'000LL
-                + 0LL;
+                + static_cast<long long>(address2);
 
             if (!m_emul.insertMemory(loc, word)) {
                 Errors::RecordError("Memory insert failed at location " + to_string(loc));
             }
 
+            // Print machine language instruction
+            cout << setw(5) << right << loc << "          ";
+            cout << setw(12) << setfill('0') << right << word << setfill(' ');
+            cout << "  " << origStatement << endl;
+
             loc = m_inst.LocationNextInstruction(loc);
             continue;
         }
     }
+
+    // Print separator and wait for user
+    cout << endl;
+    cout << "___________________________________________________________" << endl;
+    cout << endl;
+    cout << "Press Enter to continue...";
+    cin.get();
+    cout << endl;
 }
-// Run emulator on the translation.
+
+/*
+NAME
+
+    RunProgramInEmulator - runs the assembled program.
+
+SYNOPSIS
+
+    void Assembler::RunProgramInEmulator();
+
+DESCRIPTION
+
+    Executes the program that was loaded into the emulator's memory
+    during Pass II.
+*/
 void Assembler::RunProgramInEmulator()
 {
     // Attempt to run the program recorded in the emulator's memory.
@@ -194,6 +318,7 @@ void Assembler::RunProgramInEmulator()
         // Record error so it appears with other assembler diagnostics.
         Errors::RecordError("Runtime error: emulator failed to run program.");
     }
+
+    cout << endl;
+    cout << endl;
 }
-
-
