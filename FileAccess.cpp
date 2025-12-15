@@ -32,11 +32,13 @@ FileAccess::~FileAccess( )
 bool FileAccess::GetNextLine( string &a_line )
 {
     // If there is no more data, return false.
-    if( m_sfile.eof() ) {
-    
+    if (!std::getline(m_sfile, a_line)) {
         return false;
     }
-    getline( m_sfile, a_line );
+    // Remove possible CR from Windows line endings when reading on some platforms.
+    if (!a_line.empty() && a_line.back() == '\r') {
+        a_line.pop_back();
+    }
     
     // Return indicating success.
     return true;
