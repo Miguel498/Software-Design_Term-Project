@@ -33,3 +33,37 @@ SymbolTable::AddSymbol( const string &a_symbol, int a_loc )
     // Record a the  location in the symbol table.
     m_symbolTable[a_symbol] = a_loc;
 }
+
+// Function definition for LookupSymbol
+bool SymbolTable::LookupSymbol(const string& a_symbol, int& a_loc) {
+    auto it = m_symbolTable.find(a_symbol);
+    if (it != m_symbolTable.end()) {
+        a_loc = it->second;
+        return true;
+    }
+    return false;
+}
+/*
+* NAME
+*   DisplaySymbolTable - displays the symbol table.
+* SYNOPSIS
+*  void DisplaySymbolTable( );
+*   DESCRIPTION
+* 	 This function displays the contents of the symbol table to the standard output.
+* */
+void SymbolTable::DisplaySymbolTable()
+{
+    cout << "Symbol Table" << endl;
+    cout << "------------" << endl;
+    for (const auto& p : m_symbolTable) {
+        cout << p.first << " : ";
+        if (p.second == multiplyDefinedSymbol) {
+            cout << "MULTIPLY_DEFINED";
+        }
+        else {
+            cout << p.second;
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
