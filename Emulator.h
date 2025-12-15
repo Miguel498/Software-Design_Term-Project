@@ -15,11 +15,17 @@ public:
          m_memory.resize(MEMSZ, 0);
     }
     // Records instructions and data into simulated memory.
-    bool insertMemory( int a_location, long long a_contents ){
-        assert(a_location >= 0 && a_location < MEMSZ);
+    bool insertMemory(int a_location, long long a_contents) {
+        // Return false for invalid locations
+        if (a_location < 0 || a_location >= MEMSZ) {
+            return false;
+        }
         m_memory[a_location] = a_contents;
-      //  m_memory.at( a_location) = a_contents; //does bounce checking so we don't go out of the array
+        //  m_memory.at( a_location) = a_contents; //does bounce checking so we don't go out of the array
+
+        return true;
     }
+
     
     // Runs the program recorded in memory.
     bool runProgram( );
